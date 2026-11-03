@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.rkgadgets.packcheck",
+        "sha256_cert_fingerprints": ["E4:12:F1:1F:C3:D4:1D:B6:C0:74:E1:C8:67:C2:6D:AF:43:F0:4F:85:C4:FF:D3:AE:A6:BE:DC:28:DB:70:F0:6D"]
+      }
+    }]
