@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b4f8a">
+<meta name="color-scheme" content="light">
+<title>PackCheck</title>
+<meta name="application-name" content="PackCheck">
+<meta name="apple-mobile-web-app-title" content="PackCheck">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--ink:#10222f;--muted:#55687a;--line:#d5dee6;--bg:#f1f5f9;--card:#fff;--brand:#0b4f8a;--brand2:#0a3d6b;
+--ok:#0a7a3e;--okbg:#dff5e8;--bad:#c1121f;--badbg:#fde4e6;--warn:#8f4b00;--warnbg:#fff0d6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{background:var(--brand);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:20px}
+main{padding:14px 16px;max-width:640px;margin:0 auto}
+h2{font-size:20px;margin:22px 0 10px}
+h2:first-child{margin-top:4px}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:12px;min-height:60px;padding:12px 16px;width:100%;
+background:var(--brand);color:#fff;cursor:pointer;display:block;text-align:center}
+button:active{background:var(--brand2)}
+button.alt,.btn.alt{background:#fff;color:var(--brand);border:2px solid var(--brand)}
+a.btn{text-decoration:none;display:flex;align-items:center;justify-content:center}
+#updateBar{position:fixed;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom));z-index:7;padding:8px 16px}
+#updateBar button{background:var(--ok);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+button.alt:active{background:#e6eef5}
+button.good{background:var(--ok)}
+button.danger{background:#fff;color:var(--bad);border:2px solid var(--bad)}
+button.small{min-height:48px;width:auto;padding:8px 14px}
+button+button,.gap{margin-top:10px}
+input[type=text],input[type=search],input[type=number],select{font:inherit;width:100%;min-height:56px;padding:10px 12px;border:2px solid var(--line);
+border-radius:12px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:3px solid #9cc4e8;border-color:var(--brand)}
+label.f{display:block;font-weight:700;margin-bottom:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:10px;align-items:center}
+.row>.grow{flex:1;min-width:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat b{display:block;font-size:26px;line-height:1.2;overflow-wrap:anywhere}
+.stat span{color:var(--muted);font-size:15px}
+.big-total{font-size:30px;font-weight:800;line-height:1.2;overflow-wrap:anywhere}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.kv span:last-child{font-weight:700;text-align:right}
+.muted{color:var(--muted);font-size:15px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
+.name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.banner{border-radius:14px;padding:14px;margin-bottom:12px;font-weight:600;border:2px solid transparent}
+.banner strong{display:block;font-size:22px;line-height:1.25}
+.banner.ok{background:var(--ok);color:#fff}
+.banner.bad{background:var(--bad);color:#fff}
+.banner.warn{background:var(--warnbg);color:var(--warn);border-color:#e6b566}
+.banner.info{background:#e3eef8;color:var(--brand2);border-color:#a9c9e6}
+.banner ul{margin:6px 0 0;padding-left:20px}
+.banner button{margin-top:10px}
+.banner.ok button,.banner.bad button{background:#fff;color:var(--ink)}
+.pill{display:inline-block;font-size:14px;font-weight:700;padding:2px 10px;border-radius:99px;background:#e6edf3;color:var(--muted);white-space:nowrap}
+.pill.packed{background:var(--okbg);color:var(--ok)}
+.pill.cancelled{background:var(--badbg);color:var(--bad)}
+.pill.open,.pill.hold{background:var(--warnbg);color:var(--warn)}
+.line{background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.line.done{border-color:var(--ok);background:var(--okbg)}
+.count{font-size:26px;font-weight:800;white-space:nowrap}
+.line .acts{display:flex;gap:10px;margin-top:10px}
+.line .acts button{margin:0}
+.line .acts .minus{flex:0 0 76px}
+.list a{display:block;color:inherit;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{margin:0;min-height:50px;padding:6px 4px;background:#fff;color:var(--brand);border:2px solid var(--brand);font-size:16px}
+.seg button[aria-pressed=true]{background:var(--brand);color:#fff}
+.seg.wrap{flex-wrap:wrap}
+.seg.wrap button{flex:1 1 28%}
+details summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600;color:var(--brand)}
+.cam{background:#000;border-radius:14px;overflow:hidden;margin-bottom:12px;min-height:180px;position:relative}
+.cam>div{transform-origin:0 0}
+.or{text-align:center;color:var(--muted);margin:16px 0 8px}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav a{flex:1;min-width:0;min-height:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:600}
+nav a[aria-current=page]{color:var(--brand);box-shadow:inset 0 3px 0 var(--brand)}
+nav svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sheet{position:fixed;inset:0;background:rgba(9,25,38,.6);z-index:10;display:flex;align-items:flex-end}
+.sheet>div{background:#fff;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-height:88vh;overflow:auto}
+.sheet h3{margin:0 0 6px;font-size:21px}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>PackCheck</h1></header>
+<main id="view"></main>
+<nav id="tabs" aria-label="Main">
+  <a href="#/pack" data-tab="pack"><svg viewBox="0 0 24 24"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M7 8v8M11 8v8M14 8v8M17 8v8"/></svg>Pack</a>
+  <a href="#/orders" data-tab="orders"><svg viewBox="0 0 24 24"><path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"/></svg>Orders</a>
+  <a href="#/money" data-tab="money"><svg viewBox="0 0 24 24"><path d="M6 4h12M6 9h12M6 4h4a5 5 0 0 1 0 10H6l8 7"/></svg>Revenue</a>
+  <a href="#/history" data-tab="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</a>
+  <a href="#/more" data-tab="more"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>More</a>
+</nav>
+<div id="sheet"></div>
+<div id="updateBar" class="hide"><button data-act="applyUpdate">New version available — tap to update</button></div>
+<input id="fileReport" type="file" class="hide">
+<input id="fileBackup" type="file" class="hide">
+<input id="filePhoto" type="file" accept="image/*" capture="environment" class="hide">
+<script src="vendor/html5-qrcode.min.js"></script>
+<script>
+'use strict';
+/* ---------- Saved data (kept on this phone in IndexedDB) ---------- */
+const KEY = 'arcticBazaar.v1'; // where older versions kept data in localStorage
+const IDB_NAME = 'packcheck', IDB_STORE = 'kv';
+const blank = () => ({ orders: {}, fees: {}, barcodes: {}, moneyBy: 'order', moneyMp: 'all', lastBackup: null });
+let db = blank(), idb = null, writing = Promise.resolve(true);
+
+function parseData(text) {
+  try {
+    const d = JSON.parse(text);
+    if (!d || !d.orders) return blank();
+    // Orders saved before other marketplaces were added are all Amazon.
+    Object.values(d.orders).forEach(o => { o.mp = o.mp || 'amazon'; });
+    return { ...blank(), ...d };
+  } catch (e) { return blank(); }
+}
+function openIdb() {
+  return new Promise((ok, no) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => ok(req.result);
+    req.onerror = () => no(req.error);
+  });
+}
+function idbDo(mode, fn) {
+  return new Promise((ok, no) => {
+    const tx = idb.transaction(IDB_STORE, mode);
+    const req = fn(tx.objectStore(IDB_STORE));
+    tx.oncomplete = () => ok(req.result);
+    tx.onerror = tx.onabort = () => no(tx.error);
+  });
+}
+function readOldStorage() {
+  try { return localStorage.getItem(KEY); } catch (e) { return null; }
+}
+// Loads saved data. The first time, data from older versions is copied out of
+// localStorage, checked, and only then removed from there.
+async function startStorage() {
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  try { idb = await openIdb(); } catch (e) { idb = null; }
+  if (!idb) { db = parseData(readOldStorage()); return; }
+  let text = await idbDo('readonly', s => s.get('data'));
+  const old = readOldStorage();
+  if (text == null && old) {
+    await idbDo('readwrite', s => s.put(old, 'data'));
+    if (await idbDo('readonly', s => s.get('data')) === old) {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+    }
+    text = old;
+  }
+  db = parseData(text);
+}
+// Saves in the background, one write at a time. The promise says whether it worked.
+function save() {
+  const text = JSON.stringify(db);
+  writing = writing
+    .then(() => idb ? idbDo('readwrite', s => s.put(text, 'data')) : localStorage.setItem(KEY, text))
+    .then(() => true, () => {
+      alert('Your last change was NOT saved because phone storage is full. Open More, download a backup, then free up space.');
+      return false;
+    });
+  return writing;
+}
+
+/* ---------- Small helpers ---------- */
+const $ = id => document.getElementById(id);
+const view = $('view');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ID_RE = /^\d{3}-\d{7}-\d{7}$/;
+const inr = p => '₹' + (p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date';
+const fmtDateTime = iso => iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+const pad = n => String(n).padStart(2, '0');
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const orderHash = id => '#/order/' + encodeURIComponent(id);
+const digitsOf = s => String(s).replace(/\D/g, '');
+const MP_NAME = { amazon: 'Amazon', flipkart: 'Flipkart', meesho: 'Meesho', shopify: 'Shopify', other: 'Other' };
+const mpPill = o => `<span class="pill">${MP_NAME[o.mp] || 'Other'}</span>`;
+const marketplaces = () => Object.keys(MP_NAME).filter(mp => allOrders().some(o => o.mp === mp));
+// Fees are kept per marketplace. Amazon keeps the plain SKU so older saved fees still apply.
+const feeKey = (mp, sku) => mp === 'amazon' ? sku : `${mp}|${sku}`;
+
+function feedback(kind) {
+  if (navigator.vibrate) navigator.vibrate(kind === 'bad' ? [250, 100, 250] : 70);
+  try {
+    const ctx = feedback.ctx || (feedback.ctx = new (window.AudioContext || window.webkitAudioContext)());
+    const notes = kind === 'bad' ? [[180, 0, .45]] : kind === 'done' ? [[660, 0, .12], [880, .13, .25]] : [[880, 0, .1]];
+    notes.forEach(([freq, at, len]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = kind === 'bad' ? 'square' : 'sine';
+      o.frequency.value = freq;
+      g.gain.value = .2;
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + at);
+      o.stop(ctx.currentTime + at + len);
+    });
+  } catch (e) {}
+}
+
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+/* ---------- Order facts ---------- */
+function statusKind(mp, status, channel, cancelledAt) {
+  const s = (status || '').toLowerCase().replace(/_/g, ' ').trim();
+  if (cancelledAt || /cancel/.test(s)) return 'cancelled';
+  if (mp === 'amazon' && /^(amazon|afn)$/i.test(channel || '')) return 'fba';
+  if (/waiting for pick|ready to (ship|dispatch)/.test(s)) return 'open';
+  if (mp === 'amazon' && /^pending/.test(s)) return 'hold';
+  if (/^shipped|^dispatched|delivered|return|refund|^rto|pickup complete|in transit|^fulfilled$/.test(s)) return 'shipped';
+  return 'open';
+}
+function stateOf(o) {
+  if (o.kind === 'cancelled') return 'cancelled';
+  if (o.packedAt) return 'packed';
+  return o.kind;
+}
+const STATE_LABEL = { open: 'To pack', hold: 'Payment pending', packed: 'Packed', cancelled: 'Cancelled', fba: 'Amazon ships', shipped: 'Already shipped' };
+const pill = o => `<span class="pill ${stateOf(o)}">${STATE_LABEL[stateOf(o)]}</span>`;
+const isPending = o => ['open', 'hold'].includes(stateOf(o));
+const allOrders = () => Object.values(db.orders);
+const totalQty = o => o.lines.reduce((n, l) => n + l.qty, 0);
+const packedQty = o => o.lines.reduce((n, l) => n + l.packed, 0);
+const isComplete = o => o.lines.length > 0 && o.lines.every(l => l.packed >= l.qty);
+const missingLines = o => o.lines.filter(l => l.packed < l.qty);
+
+function valueOf(o) {
+  const v = { items: 0, ship: 0, total: 0, fee: 0, noPrice: false, noFee: [] };
+  for (const l of o.lines) {
+    if (l.price == null) v.noPrice = true;
+    const sale = (l.price || 0) + (l.ship || 0);
+    v.items += l.price || 0;
+    v.ship += l.ship || 0;
+    v.total += sale;
+    const pct = db.fees[feeKey(o.mp, l.sku)];
+    if (pct == null) v.noFee.push(l.sku);
+    else v.fee += sale * pct / 100;
+  }
+  v.fee = Math.round(v.fee);
+  v.net = v.total - v.fee;
+  return v;
+}
+function catalogue() {
+  const m = {};
+  for (const o of allOrders()) for (const l of o.lines) {
+    m[l.sku] = m[l.sku] || { sku: l.sku, name: l.name, asin: l.asin };
+  }
+  return Object.values(m).sort((a, b) => a.sku.localeCompare(b.sku));
+}
+function feeCatalogue() {
+  const m = {};
+  for (const o of allOrders()) for (const l of o.lines) {
+    const key = feeKey(o.mp, l.sku);
+    m[key] = m[key] || { key, mp: o.mp, sku: l.sku, name: l.name };
+  }
+  return Object.values(m).sort((a, b) => a.mp.localeCompare(b.mp) || a.sku.localeCompare(b.sku));
+}
+// Finds orders from a typed number or a scanned code: the full ID, the AWB, or the last 5+ digits.
+function lookupOrders(raw) {
+  const t = raw.trim().toUpperCase().replace(/^#/, '');
+  if (!t) return [];
+  const exact = allOrders().filter(o => o.id.toUpperCase().replace(/^#/, '') === t || (o.awb && o.awb.toUpperCase() === t));
+  if (exact.length) return exact.map(o => o.id);
+  const d = digitsOf(t);
+  if (d.length < 4) return [];
+  const same = allOrders().filter(o => digitsOf(o.id) === d);
+  if (same.length) return same.map(o => o.id);
+  return d.length >= 5 ? allOrders().filter(o => digitsOf(o.id).endsWith(d)).map(o => o.id) : [];
+}
+const cancelledAfterPacking = () => allOrders().filter(o => o.kind === 'cancelled' && o.packedAt && !o.ack);
+
+function cancelAlerts() {
+  const list = cancelledAfterPacking();
+  if (!list.length) return '';
+  return `<div class="banner bad"><strong>Packed, then cancelled</strong>Do not ship these. Pull the parcel out:
+    <ul>${list.map(o => `<li class="mono">${esc(o.id)}</li>`).join('')}</ul>
+    <button data-act="ackCancelled">I have pulled these out</button></div>`;
+}
+
+/* ---------- Reading order reports (Amazon, Flipkart, Meesho, Shopify) ---------- */
+function decodeText(buf) {
+  const b = new Uint8Array(buf);
+  if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(buf);
+  if (b[0] === 0xFE && b[1] === 0xFF) return new TextDecoder('utf-16be').decode(buf);
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+  catch (e) { return new TextDecoder('windows-1252').decode(buf); }
+}
+function cleanCell(s) {
+  s = s.trim();
+  const excel = s.match(/^="(.*)"$/);
+  if (excel) return excel[1].trim();
+  if (s.length > 1 && s[0] === '"' && s.endsWith('"')) return s.slice(1, -1).replace(/""/g, '"').trim();
+  return s;
+}
+// Amazon's tab files often contain a lone " in product names (5" screen), so tabs are split plainly.
+const parseTabbed = text => text.split(/\r\n|\n|\r/).map(l => l.split('\t').map(cleanCell));
+function parseCsv(text) {
+  const rows = [];
+  let row = [], cell = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"' && cell.trim() === '') { quoted = true; cell = ''; }
+    else if (c === ',') { row.push(cleanCell(cell)); cell = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cleanCell(cell)); rows.push(row); row = []; cell = '';
+    } else cell += c;
+  }
+  row.push(cleanCell(cell)); rows.push(row);
+  return rows;
+}
+let xlsxLib = null;
+function loadXlsx() {
+  return xlsxLib || (xlsxLib = new Promise((ok, no) => {
+    const s = document.createElement('script');
+    s.src = 'vendor/xlsx.full.min.js';
+    s.onload = ok;
+    s.onerror = () => { xlsxLib = null; no(new Error('The Excel reader could not load. Connect to the internet once and try again.')); };
+    document.head.append(s);
+  }));
+}
+// Every sheet becomes rows of text. Dates become ISO text in phone time.
+function sheetRows(ws) {
+  if (!ws['!ref']) return [];
+  const range = XLSX.utils.decode_range(ws['!ref']), rows = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row = [];
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })];
+      let v = '';
+      if (cell && cell.v != null) {
+        if (cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) {
+          const d = XLSX.SSF.parse_date_code(cell.v);
+          v = new Date(d.y, d.m - 1, d.d, d.H, d.M, Math.floor(d.S)).toISOString();
+        } else if (cell.t === 'n') v = cell.w && !/e\+/i.test(cell.w) ? cell.w : String(cell.v);
+        else v = String(cell.v);
+      }
+      row.push(v.trim());
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+async function readReportFile(file) {
+  const buf = await file.arrayBuffer();
+  const b = new Uint8Array(buf.slice(0, 8));
+  const isZip = b[0] === 0x50 && b[1] === 0x4B, isOldExcel = b[0] === 0xD0 && b[1] === 0xCF;
+  const text = isZip || isOldExcel ? '' : decodeText(buf).replace(/^﻿/, '');
+  if (isZip || isOldExcel || /^\s*<(table|html|\?xml)/i.test(text)) {
+    await loadXlsx();
+    const wb = XLSX.read(buf, { type: 'array' });
+    return wb.SheetNames.map(n => sheetRows(wb.Sheets[n]));
+  }
+  return [parseTabbed(text), parseCsv(text)];
+}
+
+// Column names are compared in lowercase with only letters and digits.
+// A trailing * means the price is for one unit; a trailing + means it already includes shipping;
+// a leading ^ matches any column that starts with the name.
+const FORMATS = [
+  {
+    mp: 'shopify', detect: n => n.includes('lineitemname') || n.includes('lineitemsku'),
+    validId: id => /^#?[A-Za-z0-9][\w-]*$/.test(id),
+    cols: {
+      id: ['name'], sku: ['lineitemsku'], name: ['lineitemname'], qty: ['lineitemquantity'], price: ['lineitemprice*'],
+      ship: ['shipping'], date: ['createdat'], status: ['fulfillmentstatus'], cancel: ['cancelledat']
+    }
+  },
+  {
+    mp: 'meesho', detect: n => n.includes('suborderno') || n.includes('subordernumber'),
+    validId: id => /^\d{6,}(_\d+)?$/.test(id),
+    cols: {
+      id: ['suborderno', 'subordernumber'], sku: ['sku'], name: ['productname'], variant: ['size', 'variation'], qty: ['quantity'],
+      price: ['^supplierdiscountedprice*', '^supplierlistedprice*', 'price*'], date: ['orderdate'],
+      status: ['reasonforcreditentry', 'orderstatus', 'status'], awb: ['awb', 'awbnumber', 'awbno', 'trackingid']
+    }
+  },
+  {
+    mp: 'flipkart', detect: n => n.includes('orderitemid') || n.includes('fsn'),
+    validId: id => /^OD\d{6,}$/i.test(id),
+    cols: {
+      id: ['orderid'], sku: ['sku', 'sellersku'], name: ['product', 'producttitle', 'productname'], asin: ['fsn'], qty: ['quantity', 'qty'],
+      price: ['sellingpriceperitem*', '^priceincfkmpcontribution', 'invoiceamount+', 'sellingprice'],
+      ship: ['shippingcharge', 'shippingcharges'], date: ['orderdate', 'orderedon'], status: ['orderstate', 'orderstatus'],
+      awb: ['trackingid', 'awbno', 'awbnumber']
+    }
+  },
+  {
+    mp: 'amazon', detect: n => n.includes('amazonorderid') || (n.includes('orderid') && n.includes('itemprice')),
+    validId: id => ID_RE.test(id),
+    cols: {
+      id: ['amazonorderid', 'orderid'], sku: ['sku', 'sellersku', 'merchantsku'], name: ['productname', 'title', 'itemname'], asin: ['asin'],
+      qty: ['quantity', 'quantitypurchased', 'qty', 'quantityordered'], price: ['itemprice', 'itemtotal', 'price'], ship: ['shippingprice'],
+      date: ['purchasedate', 'orderdate'], status: ['orderstatus'], itemStatus: ['itemstatus'], channel: ['fulfillmentchannel']
+    }
+  },
+  {
+    mp: 'other', detect: n => n.some(x => /^order(id|no|number)$/.test(x)),
+    validId: id => /^#?[A-Za-z0-9][\w-]{2,}$/.test(id),
+    cols: {
+      id: ['orderid', 'orderno', 'ordernumber'], sku: ['sku', 'sellersku'], name: ['productname', 'product', 'title', 'itemname'],
+      qty: ['quantity', 'qty'], price: ['itemprice', 'price', 'amount', 'total'], ship: ['shippingprice', 'shipping'],
+      date: ['orderdate', 'date'], status: ['orderstatus', 'status'], awb: ['awb', 'awbno', 'trackingid']
+    }
+  }
+];
+function findColumns(names, fmt) {
+  const cols = {};
+  for (const key in fmt.cols) {
+    for (const spec of fmt.cols[key]) {
+      const m = spec.match(/^(\^?)([a-z0-9]+)([*+]?)$/);
+      const at = m[1] ? names.findIndex(n => n.startsWith(m[2])) : names.indexOf(m[2]);
+      if (at >= 0) { cols[key] = { at, unit: m[3] === '*', inclShip: m[3] === '+' }; break; }
+    }
+  }
+  return cols;
+}
+function findHeader(tables) {
+  for (const rows of tables) {
+    for (let r = 0; r < Math.min(rows.length, 15); r++) {
+      const names = rows[r].map(c => c.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      for (const fmt of FORMATS) {
+        if (!fmt.detect(names)) continue;
+        const cols = findColumns(names, fmt);
+        if (cols.id && cols.qty && cols.price && (cols.sku || cols.name)) return { rows, fmt, cols, headerRow: r, headers: rows[r] };
+      }
+    }
+  }
+  return null;
+}
+function parseMoney(s) {
+  const t = (s || '').replace(/[₹,\s]|INR|Rs\.?/gi, '');
+  if (t === '') return null;
+  const n = parseFloat(t);
+  return isFinite(n) ? Math.round(n * 100) : null;
+}
+function parseDate(s) {
+  if (!s) return null;
+  const dmy = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[ ,T]+(\d{1,2}):(\d{2}))?/);
+  const d = dmy ? new Date(+dmy[3], dmy[2] - 1, +dmy[1], +(dmy[4] || 0), +(dmy[5] || 0)) : new Date(s.replace(/ ([+-]\d{2}):?(\d{2})$/, '$1:$2'));
+  return isNaN(d) ? null : d.toISOString();
+}
+function parseReport(tables) {
+  const found = findHeader(tables);
+  if (!found) throw new Error('I could not recognise this file. Use the orders file downloaded from Amazon, Flipkart, Meesho or Shopify. It needs order ID, SKU or product, quantity and price columns.');
+  const { rows, fmt, cols, headerRow, headers } = found;
+  const groups = new Map();
+  let skipped = 0, damaged = 0;
+  for (const row of rows.slice(headerRow + 1)) {
+    if (row.every(c => c === '')) continue;
+    const at = k => cols[k] ? (row[cols[k].at] || '') : '';
+    const id = at('id'), qty = parseInt(at('qty'), 10);
+    const sku = at('sku') || at('name');
+    if (/^\d(\.\d+)?e\+?\d+$/i.test(id)) { damaged++; continue; }
+    if (!fmt.validId(id) || !sku || isNaN(qty)) { skipped++; continue; }
+    let price = parseMoney(at('price'));
+    if (price != null && cols.price.unit) price = Math.round(price * qty);
+    const g = groups.get(id) || { id, mp: fmt.mp, rows: [] };
+    // Shopify fills order details only on an order's first row, so blanks never overwrite them.
+    for (const [k, v] of [['date', parseDate(at('date'))], ['status', at('status')], ['channel', at('channel')], ['cancel', at('cancel')], ['awb', at('awb')]]) {
+      if (v && !g[k]) g[k] = v;
+    }
+    const variant = at('variant');
+    g.rows.push({
+      sku, name: (at('name') || sku) + (variant ? ` (${variant})` : ''), asin: at('asin'), qty, price,
+      ship: cols.price.inclShip ? 0 : parseMoney(at('ship')) || 0,
+      cancelled: /cancel/i.test(at('itemStatus'))
+    });
+    groups.set(id, g);
+  }
+  return { groups: [...groups.values()], skipped, damaged, mp: fmt.mp, priceCol: headers[cols.price.at] };
+}
+function mergeRows(rows) {
+  const live = rows.filter(r => r.qty > 0 && !r.cancelled);
+  const bySku = new Map();
+  for (const r of live) {
+    const l = bySku.get(r.sku);
+    if (l) {
+      l.qty += r.qty;
+      l.price = l.price == null || r.price == null ? null : l.price + r.price;
+      l.ship += r.ship;
+    } else bySku.set(r.sku, { sku: r.sku, name: r.name, asin: r.asin, qty: r.qty, price: r.price, ship: r.ship, packed: 0 });
+  }
+  return [...bySku.values()];
+}
+function importReport(tables) {
+  const { groups, skipped, damaged, mp, priceCol } = parseReport(tables);
+  const res = { mp, priceCol, added: 0, updated: 0, cancelled: 0, amazon: 0, shipped: 0, skipped, damaged, noPrice: 0, newlyCancelledPacked: 0 };
+  for (const g of groups) {
+    const lines = mergeRows(g.rows);
+    const kind = lines.length ? statusKind(g.mp, g.status, g.channel, g.cancel) : 'cancelled';
+    const old = db.orders[g.id];
+    if (old) {
+      if (old.kind !== 'cancelled' && kind === 'cancelled' && old.packedAt) res.newlyCancelledPacked++;
+      if (lines.length) {
+        for (const l of lines) {
+          const prev = old.lines.find(x => x.sku === l.sku);
+          if (prev) l.packed = Math.min(prev.packed, l.qty);
+        }
+        old.lines = lines;
+      }
+      old.date = g.date || old.date;
+      old.status = g.status;
+      old.kind = kind;
+      old.mp = g.mp;
+      if (g.awb && !old.awb) old.awb = g.awb;
+      res.updated++;
+    } else {
+      db.orders[g.id] = { id: g.id, mp: g.mp, date: g.date, status: g.status, kind, lines, awb: g.awb || '', packedAt: null };
+      res.added++;
+    }
+    if (kind === 'cancelled') res.cancelled++;
+    if (kind === 'fba') res.amazon++;
+    if (kind === 'shipped') res.shipped++;
+    if (lines.some(l => l.price == null)) res.noPrice++;
+  }
+  return res;
+}
+
+/* ---------- Camera barcode scanner ---------- */
+const SCAN_WIDTH = 1200;
+const Cam = {
+  inst: null, queue: Promise.resolve(), seen: {},
+  start(boxId, onCode, onFail) {
+    this.queue = this.queue.then(async () => {
+      const box = $(boxId);
+      if (!box) return;
+      // The library reads barcodes at the size of its element, and thin AWB bars vanish
+      // at phone-screen width. So it gets a large element, shrunk to fit only on screen.
+      box.innerHTML = `<div id="camInner" style="width:${SCAN_WIDTH}px"></div>`;
+      const inner = $('camInner'), zoom = box.clientWidth / SCAN_WIDTH;
+      inner.style.transform = `scale(${zoom})`;
+      const F = Html5QrcodeSupportedFormats;
+      const inst = new Html5Qrcode('camInner', {
+        verbose: false,
+        useBarCodeDetectorIfSupported: true,
+        formatsToSupport: [F.CODE_128, F.CODE_39, F.CODE_93, F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.ITF, F.CODABAR, F.QR_CODE, F.DATA_MATRIX]
+      });
+      this.seen = {};
+      try {
+        await inst.start({ facingMode: 'environment' }, {
+          fps: 10,
+          qrbox: (w, h) => ({ width: Math.floor(w * .92), height: Math.floor(Math.min(h, w) * .5) }),
+          videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        }, text => this.onRead(text, onCode), () => {});
+        this.inst = inst;
+        const shown = inner.offsetHeight * zoom, height = Math.min(shown, box.clientWidth * .75);
+        box.style.height = height + 'px';
+        inner.style.transform = `translateY(${(height - shown) / 2}px) scale(${zoom})`;
+        inst.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+      } catch (e) {
+        try { inst.clear(); } catch (x) {}
+        if (box.isConnected) onFail(cameraProblem(e));
+      }
+    });
+    return this.queue;
+  },
+  // A code must be read twice to count, and must leave the camera for 2 seconds
+  // before it counts again. Holding one box still can never tick two items.
+  onRead(text, onCode) {
+    text = text.trim();
+    const now = Date.now();
+    let s = this.seen[text];
+    if (!s || now - s.at > 2000) s = this.seen[text] = { n: 0, fired: false };
+    s.at = now;
+    s.n++;
+    if (s.n >= 2 && !s.fired) { s.fired = true; onCode(text); }
+  },
+  stop() {
+    this.queue = this.queue.then(async () => {
+      const inst = this.inst;
+      this.inst = null;
+      if (!inst) return;
+      try { await inst.stop(); } catch (e) {}
+      try { inst.clear(); } catch (e) {}
+    });
+    return this.queue;
+  }
+};
+function cameraProblem(e) {
+  const t = String(e && (e.name || e.message || e));
+  if (!window.isSecureContext) return 'The camera only works when the app is opened from its https:// web address.';
+  if (/NotAllowed|Permission/i.test(t)) return 'Camera permission is blocked. In Chrome, open the site settings for this app and allow Camera, then try again.';
+  if (/NotFound|Devices/i.test(t)) return 'No camera was found on this device.';
+  if (/NotReadable|in use/i.test(t)) return 'Another app is using the camera. Close it and try again.';
+  return 'The camera could not start. Close other apps and try again.';
+}
+
+/* ---------- Reading the Order ID from a label photo ---------- */
+// The text reader mixes up some letters and digits, so those are swapped before searching.
+const ocrDigits = text => text.replace(/[OoDQ]/g, '0').replace(/[lI|]/g, '1').replace(/[Ss]/g, '5').replace(/B/g, '8').replace(/Z/g, '2');
+// Order numbers that look like Amazon or Flipkart IDs, imported or not.
+function findOrderIds(text) {
+  const t = ocrDigits(text).replace(/[–—_~.]/g, '-');
+  const out = new Set();
+  for (const m of t.matchAll(/(?<!\d)(\d{3})\s*-?\s*(\d{7})\s*-?\s*(\d{7})(?!\d)/g)) out.add(`${m[1]}-${m[2]}-${m[3]}`);
+  for (const m of t.matchAll(/(?<!\d)00\s*(\d{18})(?!\d)/g)) out.add('OD' + m[1]);
+  return [...out];
+}
+// Imported orders whose number appears anywhere in the text. Short numbers (like Shopify #1001)
+// are skipped because they would match by chance.
+function knownIdsInText(text) {
+  const soup = digitsOf(ocrDigits(text));
+  const hits = allOrders().map(o => ({ id: o.id, d: digitsOf(o.id) })).filter(x => x.d.length >= 8 && soup.includes(x.d));
+  return hits.filter(x => !hits.some(y => y.d.length > x.d.length && y.d.includes(x.d))).map(x => x.id);
+}
+function nearOrders(id) {
+  const d = digitsOf(id), out = [];
+  for (const o of allOrders()) {
+    const k = digitsOf(o.id);
+    if (k.length !== d.length || d.length < 8) continue;
+    let diff = 0;
+    for (let i = 0; i < d.length; i++) if (d[i] !== k[i]) diff++;
+    if (diff <= 2) out.push(o.id);
+  }
+  return out;
+}
+let ocrWorker = null, ocrLib = null;
+function loadOcr() {
+  return ocrLib || (ocrLib = new Promise((ok, no) => {
+    const s = document.createElement('script');
+    s.src = 'vendor/tesseract.min.js';
+    s.onload = ok;
+    s.onerror = () => { ocrLib = null; no(new Error('load')); };
+    document.head.append(s);
+  }));
+}
+async function getOcrWorker(onProgress) {
+  await loadOcr();
+  if (!ocrWorker) {
+    const base = new URL('vendor/', location.href).href;
+    ocrWorker = await Tesseract.createWorker('eng', 1, {
+      workerPath: base + 'worker.min.js', corePath: base, langPath: base,
+      workerBlobURL: false, cacheMethod: 'none',
+      logger: m => { if (m.status === 'recognizing text') onProgress(m.progress); }
+    });
+    await ocrWorker.setParameters({ tessedit_pageseg_mode: '11' });
+  }
+  return ocrWorker;
+}
+function loadImage(file) {
+  return new Promise((ok, no) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); ok(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); no(new Error('image')); };
+    img.src = url;
+  });
+}
+function prepared(img, turns) {
+  const scale = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+  const c = document.createElement('canvas');
+  c.width = turns % 2 ? h : w;
+  c.height = turns % 2 ? w : h;
+  const g = c.getContext('2d');
+  g.filter = 'grayscale(1) contrast(1.4)';
+  g.translate(c.width / 2, c.height / 2);
+  g.rotate(turns * Math.PI / 2);
+  g.drawImage(img, -w / 2, -h / 2, w, h);
+  return c;
+}
+async function readOrderIds(file, onStatus) {
+  const img = await loadImage(file);
+  const worker = await getOcrWorker(p => onStatus(p));
+  // Phones often save a label sideways, so each direction is tried until an ID turns up.
+  for (const turns of [0, 1, 3, 2]) {
+    const { data } = await worker.recognize(prepared(img, turns));
+    const known = knownIdsInText(data.text), seen = findOrderIds(data.text);
+    if (known.length || seen.length) return { known, seen };
+  }
+  return { known: [], seen: [] };
+}
+
+/* ---------- Router and clicks ---------- */
+const VIEWS = { pack: renderPack, orders: renderOrders, money: renderMoney, history: renderHistory, more: renderMore, order: renderOrder };
+function route() {
+  Cam.stop();
+  closeSheet();
+  const [name, raw] = location.hash.replace(/^#\/?/, '').split('/');
+  const v = VIEWS[name] ? name : 'pack';
+  let arg = raw;
+  try { arg = raw && decodeURIComponent(raw); } catch (e) {}
+  document.querySelectorAll('#tabs a').forEach(a => {
+    const on = a.dataset.tab === (v === 'order' ? 'orders' : v);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  window.scrollTo(0, 0);
+  VIEWS[v](arg);
+}
+const actions = {};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (el && actions[el.dataset.act]) actions[el.dataset.act](el);
+});
+actions.ackCancelled = () => {
+  cancelledAfterPacking().forEach(o => { o.ack = true; });
+  save();
+  route();
+};
+
+/* ---------- Pack tab: find the order for a label ---------- */
+const pk = { step: 'idle', awb: '', msg: null, choices: [], typed: '' };
+const banner = m => m ? `<div class="banner ${m.kind}"><strong>${esc(m.title)}</strong>${esc(m.text || '')}</div>` : '';
+
+function renderPack() {
+  const orders = allOrders();
+  const today = dayKey(new Date());
+  const packedToday = orders.filter(o => o.packedAt && dayKey(new Date(o.packedAt)) === today).length;
+  const scanning = pk.step === 'scan';
+  view.innerHTML = `${cancelAlerts()}${backupReminder()}
+    <div class="stats">
+      <div class="stat"><b>${orders.filter(isPending).length}</b><span>Orders to pack</span></div>
+      <div class="stat"><b>${packedToday}</b><span>Packed today</span></div>
+    </div>
+    ${orders.length ? '' : `<div class="banner info"><strong>Start here</strong>Import your orders file from Amazon, Flipkart, Meesho or Shopify first.
+      <button data-act="goImport">Go to Import</button></div>`}
+    ${banner(pk.msg)}
+    ${pk.awb ? `<div class="banner info"><strong>AWB saved</strong><span class="mono">${esc(pk.awb)}</span></div>` : ''}
+    ${pk.choices.length ? `<div class="card"><b>Is it one of these orders?</b> Check against the label.
+      ${pk.choices.map(id => `<button class="alt gap mono" data-act="pickOrder" data-id="${esc(id)}">${esc(id)}</button>`).join('')}</div>` : ''}
+    ${scanning ? `<div class="cam" id="camLabel"></div><p class="muted">Point the camera at the AWB or tracking barcode on the label.</p>` : ''}
+    ${pk.step === 'busy' ? `<div class="banner info"><strong id="ocrTitle">Reading the label…</strong><span id="ocrText">This can take up to a minute.</span></div>` : `
+      ${pk.awb ? `<button data-act="photo">Take photo of Order ID</button>
+        <button class="alt" data-act="startLabel">Scan AWB again</button>` :
+        scanning ? `<button data-act="photo">Skip AWB: photo of Order ID</button><button class="alt" data-act="cancelScan">Stop camera</button>` :
+        `<button data-act="startLabel">Scan shipping label</button><button class="alt" data-act="photo">Take photo of Order ID</button>`}
+    `}
+    <div class="or">or type it</div>
+    <label class="f" for="typedId">Order ID</label>
+    <input id="typedId" type="text" autocomplete="off" autocapitalize="characters" placeholder="Full ID or last 5 digits" value="${esc(pk.typed)}">
+    <button class="alt gap" data-act="openTyped">Open order</button>`;
+  if (scanning) startLabelCam();
+}
+function startLabelCam() {
+  Cam.start('camLabel', code => {
+    Cam.stop();
+    feedback('ok');
+    const up = code.toUpperCase();
+    const byId = allOrders().find(o => o.id.toUpperCase() === up);
+    if (byId) return openOrder(byId.id);
+    if (ID_RE.test(code)) return goToOrder(code);
+    const byAwb = allOrders().find(o => o.awb && o.awb.toUpperCase() === up);
+    pk.awb = code;
+    if (byAwb) return openOrder(byAwb.id);
+    pk.step = 'idle';
+    pk.msg = null;
+    renderPack();
+  }, msg => {
+    pk.step = 'idle';
+    pk.msg = { kind: 'bad', title: 'Camera problem', text: msg + ' You can still photograph the label or type the Order ID.' };
+    renderPack();
+  });
+}
+function resetPack() {
+  Object.assign(pk, { step: 'idle', awb: '', msg: null, choices: [], typed: '' });
+}
+actions.goImport = () => { location.hash = '#/orders'; };
+actions.startLabel = () => {
+  Object.assign(pk, { step: 'scan', awb: '', msg: null, choices: [] });
+  renderPack();
+};
+actions.cancelScan = () => {
+  Cam.stop();
+  pk.step = 'idle';
+  renderPack();
+};
+actions.photo = () => {
+  $('filePhoto').value = '';
+  $('filePhoto').click();
+  if (pk.step === 'scan') { Cam.stop(); pk.step = 'idle'; renderPack(); }
+};
+actions.pickOrder = el => openOrder(el.dataset.id);
+actions.openTyped = () => {
+  const raw = $('typedId').value.trim();
+  pk.typed = raw;
+  const digits = digitsOf(raw);
+  pk.choices = [];
+  const hits = lookupOrders(raw);
+  if (hits.length === 1) return openOrder(hits[0]);
+  if (hits.length > 1) { pk.choices = hits; pk.msg = null; return renderPack(); }
+  if (digits.length === 17 && !/[a-z]/i.test(raw)) return goToOrder(`${digits.slice(0, 3)}-${digits.slice(3, 10)}-${digits.slice(10)}`);
+  pk.msg = { kind: 'bad', title: 'Order not found', text: 'Type the full order ID, or at least the last 5 digits. If it is new, import your latest orders file.' };
+  feedback('bad');
+  renderPack();
+};
+function goToOrder(id) {
+  if (db.orders[id]) return openOrder(id);
+  pk.step = 'idle';
+  pk.choices = nearOrders(id);
+  pk.msg = { kind: 'bad', title: 'Order not in the app', text: `${id} has not been imported. Import your latest order report, or check the number.` };
+  feedback('bad');
+  location.hash === '#/pack' ? renderPack() : (location.hash = '#/pack');
+}
+function openOrder(id) {
+  const o = db.orders[id];
+  let note = null;
+  if (pk.awb) {
+    if (o.awb && o.awb !== pk.awb) {
+      note = { kind: 'bad', title: 'Different AWB', text: `This order was linked to AWB ${o.awb}, but you just scanned ${pk.awb}. Check you have the right label.` };
+    } else {
+      const clash = allOrders().find(x => x.awb === pk.awb && x.id !== id);
+      if (clash) note = { kind: 'bad', title: 'AWB already used', text: `AWB ${pk.awb} belongs to order ${clash.id}. Check you have the right label.` };
+      else { o.awb = pk.awb; save(); }
+    }
+  }
+  resetPack();
+  showOrder(id, note, true);
+}
+$('filePhoto').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  pk.step = 'busy';
+  pk.msg = null;
+  pk.choices = [];
+  renderPack();
+  try {
+    const { known, seen } = await readOrderIds(file, p => {
+      const t = $('ocrText');
+      if (t) t.textContent = `Reading… ${Math.round(p * 100)}%`;
+    });
+    pk.step = 'idle';
+    if (known.length === 1) return openOrder(known[0]);
+    feedback('bad');
+    if (known.length > 1) {
+      pk.choices = known;
+      pk.msg = { kind: 'info', title: 'More than one order matched', text: 'Pick the one printed on the label.' };
+    } else if (!seen.length) {
+      pk.msg = { kind: 'bad', title: 'Could not read the Order ID', text: 'Hold the phone closer with good light and try again, or type it below.' };
+    } else {
+      pk.choices = [...new Set(seen.flatMap(nearOrders))];
+      pk.msg = { kind: 'bad', title: 'Order not in the app', text: `The label seems to say ${seen.join(' or ')}, which is not imported. Check the number or import your latest orders file.` };
+    }
+  } catch (err) {
+    pk.step = 'idle';
+    pk.msg = { kind: 'bad', title: 'Text reader failed', text: 'Please type the Order ID below.' };
+  }
+  renderPack();
+});
+
+/* ---------- Packing one order ---------- */
+const job = { id: null, msg: null, note: null, auto: false, sheet: false };
+
+function showOrder(id, note, auto) {
+  Object.assign(job, { id, msg: null, note: note || null, auto: !!auto, fromScan: !!auto });
+  const hash = orderHash(id);
+  if (location.hash === hash) route(); else location.hash = hash;
+}
+function renderOrder(id) {
+  if (job.id !== id) Object.assign(job, { id, msg: null, note: null, auto: false, fromScan: false });
+  const o = db.orders[id];
+  if (!o) {
+    view.innerHTML = `<div class="banner bad"><strong>Order not found</strong>${esc(id)}</div>`;
+    return;
+  }
+  view.innerHTML = `<div id="orderTop"></div><div id="camBox" class="cam hide"></div><div id="orderBody"></div>`;
+  paintOrder();
+  const st = stateOf(o);
+  if (job.auto && st !== 'cancelled' && st !== 'packed' && !isComplete(o)) startProductCam();
+  job.auto = false;
+}
+function canPack(o) { return stateOf(o) !== 'cancelled' && !o.packedAt; }
+
+function statusBanner(o) {
+  switch (stateOf(o)) {
+    case 'cancelled':
+      return `<div class="banner bad"><strong>CANCELLED: DO NOT SHIP</strong>This order was cancelled.${o.packedAt ? ' Pull the parcel out.' : ''}</div>`;
+    case 'packed':
+      if (!job.fromScan && job.msg) return '';
+      return job.fromScan
+        ? `<div class="banner bad"><strong>ALREADY PACKED</strong>This order was packed on ${esc(fmtDateTime(o.packedAt))}. Do not ship it twice.</div>`
+        : `<div class="banner ok"><strong>Fully packed</strong>${esc(fmtDateTime(o.packedAt))}</div>`;
+    case 'fba':
+      return `<div class="banner warn"><strong>Amazon ships this order</strong>The report says Amazon fulfils it, so you may not need to pack it.</div>`;
+    case 'shipped':
+      return `<div class="banner warn"><strong>Already shipped</strong>${MP_NAME[o.mp] || 'The marketplace'} shows this order as ${esc(o.status || 'shipped')}.</div>`;
+    case 'hold':
+      return `<div class="banner warn"><strong>Payment pending</strong>Amazon still shows Pending. Wait before shipping.</div>`;
+  }
+  return '';
+}
+function paintOrder() {
+  const o = db.orders[job.id];
+  const v = valueOf(o);
+  $('orderTop').innerHTML = `${banner(job.note)}${banner(job.msg)}${statusBanner(o)}
+    <div class="card">
+      <div class="row"><div class="grow mono"><b>${esc(o.id)}</b></div>${pill(o)}</div>
+      <div class="kv"><span>Marketplace</span><span>${MP_NAME[o.mp] || 'Other'}</span></div>
+      <div class="kv"><span>Order value</span><span>${v.noPrice ? 'Price not in report' : inr(v.total)}</span></div>
+      <div class="kv"><span>Ordered</span><span>${esc(fmtDate(o.date))}</span></div>
+      ${o.awb ? `<div class="kv"><span>AWB</span><span class="mono">${esc(o.awb)}</span></div>` : ''}
+    </div>`;
+  const packable = canPack(o);
+  const running = !!Cam.inst || job.camStarting;
+  $('orderBody').innerHTML = `
+    ${packable ? `<h2>Packed ${packedQty(o)} of ${totalQty(o)} items</h2>` : '<h2>Items</h2>'}
+    ${packable ? `<button data-act="${running ? 'stopProducts' : 'scanProducts'}" class="${running ? 'alt' : ''}">${running ? 'Stop camera' : 'Scan product barcode'}</button><div class="gap"></div>` : ''}
+    ${o.lines.map((l, i) => `<div class="line ${l.packed >= l.qty ? 'done' : ''}">
+      <div class="row"><div class="grow"><div class="name">${esc(l.name)}</div><div class="muted mono">${esc(l.sku)}</div></div>
+      <div class="count">${l.packed} / ${l.qty}</div></div>
+      ${packable ? `<div class="acts">
+        ${l.packed > 0 ? `<button class="danger minus" data-act="minus" data-i="${i}" aria-label="Remove one">−1</button>` : ''}
+        ${l.packed < l.qty ? `<button class="good" data-act="plus" data-i="${i}">Tick 1 packed</button>` : ''}
+      </div>` : ''}
+    </div>`).join('')}
+    ${packable ? `<button data-act="checkOrder">Check and finish</button>` : ''}
+    ${o.packedAt ? `<button data-act="nextLabel">Scan next label</button>
+      <button class="danger" data-act="undoPacked">Undo packed</button>` : ''}`;
+}
+function startProductCam() {
+  const box = $('camBox');
+  box.classList.remove('hide');
+  job.camStarting = true;
+  paintOrder();
+  Cam.start('camBox', onProductCode, msg => {
+    job.camStarting = false;
+    box.classList.add('hide');
+    job.msg = { kind: 'bad', title: 'Camera problem', text: msg + ' You can still tick items by hand.' };
+    paintOrder();
+  }).then(() => { job.camStarting = false; });
+}
+function stopProductCam() {
+  job.camStarting = false;
+  const done = Cam.stop();
+  const box = $('camBox');
+  if (box) done.then(() => box.classList.add('hide'));
+  return done;
+}
+actions.scanProducts = () => { job.msg = null; startProductCam(); };
+actions.stopProducts = () => { stopProductCam().then(paintOrder); };
+actions.nextLabel = () => {
+  resetPack();
+  pk.step = 'scan';
+  location.hash = '#/pack';
+};
+
+function tick(o, line, n) {
+  line.packed = Math.max(0, Math.min(line.qty, line.packed + n));
+  if (isComplete(o)) {
+    o.packedAt = new Date().toISOString();
+    job.fromScan = false;
+    job.note = null;
+    job.msg = { kind: 'ok', title: 'Fully packed', text: `All ${totalQty(o)} items are in. Seal the box.` };
+    feedback('done');
+    stopProductCam();
+  } else if (n > 0) {
+    job.msg = { kind: 'info', title: `OK: ${line.packed} of ${line.qty}`, text: line.name };
+    feedback('ok');
+  } else job.msg = null;
+  save();
+  paintOrder();
+}
+function skuForCode(code, o) {
+  if (db.barcodes[code]) return db.barcodes[code];
+  const same = l => l.sku.toLowerCase() === code.toLowerCase() || (l.asin && l.asin.toLowerCase() === code.toLowerCase());
+  const here = o.lines.find(same);
+  if (here) return here.sku;
+  const other = catalogue().find(same);
+  return other ? other.sku : null;
+}
+function wrongItem(o, sku) {
+  const item = catalogue().find(c => c.sku === sku);
+  job.msg = { kind: 'bad', title: 'WRONG ITEM', text: `${item ? item.name : sku} is not in this order. Take it out.` };
+  feedback('bad');
+  paintOrder();
+}
+function onProductCode(code) {
+  const o = db.orders[job.id];
+  if (job.sheet || !o || !canPack(o)) return;
+  const sku = skuForCode(code, o);
+  if (!sku) return askBarcode(code, o);
+  const line = o.lines.find(l => l.sku === sku);
+  if (!line) return wrongItem(o, sku);
+  if (line.packed >= line.qty) {
+    job.msg = { kind: 'bad', title: 'EXTRA ITEM', text: `This order only needs ${line.qty} of ${line.name}. Take the extra one out.` };
+    feedback('bad');
+    return paintOrder();
+  }
+  tick(o, line, 1);
+}
+function askBarcode(code, o) {
+  job.sheet = code;
+  feedback('ok');
+  const others = catalogue().filter(c => !o.lines.some(l => l.sku === c.sku));
+  $('sheet').innerHTML = `<div class="sheet"><div>
+    <h3>New barcode</h3>
+    <p class="muted">Look at the product in your hand. The app will remember this barcode <span class="mono">${esc(code)}</span>.</p>
+    ${o.lines.map(l => `<button class="alt gap" data-act="linkHere" data-sku="${esc(l.sku)}">${esc(l.name.slice(0, 70))}<br><span class="muted mono">${esc(l.sku)}</span></button>`).join('')}
+    ${others.length ? `<label class="f gap" for="linkOther">It is a different product</label>
+      <select id="linkOther"><option value="">Choose SKU…</option>${others.map(c => `<option value="${esc(c.sku)}">${esc(c.sku)} – ${esc(c.name.slice(0, 40))}</option>`).join('')}</select>` : ''}
+    <button class="danger gap" data-act="notInOrder">Not in this order</button>
+    <button class="alt" data-act="closeSheet">Scanned by mistake</button>
+  </div></div>`;
+  const other = $('linkOther');
+  if (other) other.addEventListener('change', () => { if (other.value) confirmBarcode(other.value); });
+}
+// A wrong link would make the app accept the wrong product later, so it is confirmed first.
+function confirmBarcode(sku) {
+  const item = catalogue().find(c => c.sku === sku);
+  $('sheet').innerHTML = `<div class="sheet"><div>
+    <h3>Save this barcode?</h3>
+    <p>Save <span class="mono">${esc(job.sheet)}</span> as:</p>
+    <div class="card"><div class="name"><b>${esc(item ? item.name : sku)}</b></div><div class="muted mono">${esc(sku)}</div></div>
+    <button class="good" data-act="saveBarcode" data-sku="${esc(sku)}">Yes, save</button>
+    <button class="alt" data-act="chooseAgain">Choose again</button>
+  </div></div>`;
+}
+function closeSheet() {
+  job.sheet = false;
+  $('sheet').innerHTML = '';
+}
+actions.closeSheet = closeSheet;
+actions.linkHere = el => confirmBarcode(el.dataset.sku);
+actions.chooseAgain = () => askBarcode(job.sheet, db.orders[job.id]);
+actions.saveBarcode = el => {
+  const o = db.orders[job.id], sku = el.dataset.sku;
+  db.barcodes[job.sheet] = sku;
+  closeSheet();
+  save();
+  const line = o.lines.find(l => l.sku === sku);
+  if (!line) return wrongItem(o, sku);
+  if (line.packed >= line.qty) {
+    job.msg = { kind: 'bad', title: 'EXTRA ITEM', text: `This order only needs ${line.qty} of ${line.name}. Take the extra one out.` };
+    feedback('bad');
+    return paintOrder();
+  }
+  tick(o, line, 1);
+};
+actions.notInOrder = () => {
+  closeSheet();
+  job.msg = { kind: 'bad', title: 'WRONG ITEM', text: 'This product is not in the order. Take it out.' };
+  feedback('bad');
+  paintOrder();
+};
+actions.plus = el => { const o = db.orders[job.id]; tick(o, o.lines[+el.dataset.i], 1); };
+actions.minus = el => { const o = db.orders[job.id]; tick(o, o.lines[+el.dataset.i], -1); };
+actions.checkOrder = () => {
+  const o = db.orders[job.id];
+  const miss = missingLines(o);
+  if (miss.length) {
+    job.msg = {
+      kind: 'bad', title: `MISSING ${miss.reduce((n, l) => n + l.qty - l.packed, 0)} ITEM(S)`,
+      text: miss.map(l => `${l.qty - l.packed} × ${l.name}`).join('; ')
+    };
+    feedback('bad');
+    paintOrder();
+    window.scrollTo(0, 0);
+  }
+};
+actions.undoPacked = () => {
+  const o = db.orders[job.id];
+  if (!confirm('Mark this order as not packed and clear its ticks?')) return;
+  o.packedAt = null;
+  o.lines.forEach(l => { l.packed = 0; });
+  job.msg = null;
+  job.fromScan = false;
+  save();
+  paintOrder();
+};
+
+/* ---------- Orders tab ---------- */
+const ol = { filter: 'pending', mp: 'all', search: '', limit: 100, result: null };
+
+// Buttons to pick a marketplace. Hidden while only one marketplace has orders.
+function mpChooser(current, act) {
+  const mps = marketplaces();
+  if (mps.length < 2) return '';
+  return `<div class="seg wrap">${['all', ...mps].map(mp => `<button data-act="${act}" data-k="${mp}" aria-pressed="${current === mp}">${mp === 'all' ? 'All stores' : MP_NAME[mp]}</button>`).join('')}</div>`;
+}
+function renderOrders() {
+  const r = ol.result;
+  if (!marketplaces().includes(ol.mp)) ol.mp = 'all';
+  view.innerHTML = `${cancelAlerts()}
+    <button data-act="pickReport">Import orders file</button>
+    <details class="muted gap"><summary>Where do I get the orders file?</summary>
+      <p><b>Amazon:</b> Seller Central, Reports, Fulfilment, All Orders. Download the .txt report.<br>
+      <b>Flipkart:</b> Seller Hub, Orders, then download your orders (Excel or CSV).<br>
+      <b>Meesho:</b> Supplier Panel, Orders, then download orders (CSV).<br>
+      <b>Shopify:</b> Orders, Export, then choose a CSV file.</p>
+      <p>The app works out which marketplace a file comes from. Importing again is safe: packed orders stay packed.</p></details>
+    ${r && r.error ? `<div class="banner bad"><strong>Import failed</strong>${esc(r.error)}</div>` : ''}
+    ${r && !r.error ? `<div class="banner ok"><strong>${r.added} new, ${r.updated} updated</strong>Read as a ${MP_NAME[r.mp]} file.</div>
+      <p class="muted">Price taken from the column “${esc(r.priceCol)}”. Check one order against your seller panel the first time.</p>
+      ${r.newlyCancelledPacked ? `<div class="banner bad"><strong>${r.newlyCancelledPacked} packed order(s) now cancelled</strong>Do not ship them.</div>` : ''}
+      ${r.damaged ? `<div class="banner bad"><strong>${r.damaged} order ID(s) were damaged by Excel</strong>They look like 1.23E+17. Import the file exactly as downloaded, without opening and saving it in Excel.</div>` : ''}
+      ${r.cancelled || r.amazon || r.shipped || r.skipped || r.noPrice ? `<div class="banner warn">
+        ${r.cancelled ? `${r.cancelled} cancelled. ` : ''}${r.amazon ? `${r.amazon} shipped by Amazon. ` : ''}${r.shipped ? `${r.shipped} already shipped. ` : ''}
+        ${r.noPrice ? `${r.noPrice} with no price yet (import again later). ` : ''}${r.skipped ? `${r.skipped} row(s) could not be read.` : ''}</div>` : ''}` : ''}
+    <div class="seg">
+      ${[['pending', 'To pack'], ['packed', 'Packed'], ['all', 'All']].map(([k, t]) => `<button data-act="filter" data-k="${k}" aria-pressed="${ol.filter === k}">${t}</button>`).join('')}
+    </div>
+    ${mpChooser(ol.mp, 'orderMp')}
+    <input id="orderSearch" type="search" placeholder="Search order ID, SKU or product" value="${esc(ol.search)}" aria-label="Search orders">
+    <div class="gap list" id="orderList"></div>`;
+  $('orderSearch').addEventListener('input', e => { ol.search = e.target.value; ol.limit = 100; paintOrderList(); });
+  paintOrderList();
+}
+function paintOrderList() {
+  const q = ol.search.trim().toLowerCase();
+  const list = allOrders()
+    .filter(o => ol.filter === 'all' || (ol.filter === 'packed' ? stateOf(o) === 'packed' : isPending(o)))
+    .filter(o => ol.mp === 'all' || o.mp === ol.mp)
+    .filter(o => !q || o.id.toLowerCase().includes(q) || o.lines.some(l => l.sku.toLowerCase().includes(q) || l.name.toLowerCase().includes(q)))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  $('orderList').innerHTML = (list.length ? '' : '<p class="muted">No orders here.</p>') + list.slice(0, ol.limit).map(o => {
+    const v = valueOf(o);
+    return `<a href="${esc(orderHash(o.id))}">
+      <div class="row"><div class="grow mono"><b>${esc(o.id)}</b></div>${pill(o)}</div>
+      <div class="name muted">${esc(o.lines.map(l => `${l.qty} × ${l.name}`).join(', ') || 'No items')}</div>
+      <div class="row"><div class="grow muted">${mpPill(o)} ${esc(fmtDate(o.date))}</div><b>${v.noPrice ? 'No price yet' : inr(v.total)}</b></div>
+    </a>`;
+  }).join('') + (list.length > ol.limit ? `<button class="alt" data-act="moreOrders">Show more (${list.length - ol.limit} left)</button>` : '');
+}
+actions.moreOrders = () => { ol.limit += 100; paintOrderList(); };
+actions.filter = el => { ol.filter = el.dataset.k; renderOrders(); };
+actions.orderMp = el => { ol.mp = el.dataset.k; ol.limit = 100; renderOrders(); };
+actions.pickReport = () => { $('fileReport').value = ''; $('fileReport').click(); };
+$('fileReport').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const before = JSON.stringify(db);
+  try {
+    ol.result = importReport(await readReportFile(file));
+    if (!(await save())) { db = JSON.parse(before); ol.result = { error: 'Phone storage is full, so nothing was imported.' }; }
+    else { ol.filter = 'pending'; ol.mp = 'all'; }
+  } catch (err) {
+    db = JSON.parse(before);
+    ol.result = { error: err.message };
+  }
+  if (location.hash === '#/orders') renderOrders(); else location.hash = '#/orders';
+});
+
+/* ---------- Revenue tab ---------- */
+function totals(test) {
+  const t = { count: 0, total: 0, fee: 0, net: 0, byMp: {} };
+  for (const o of allOrders()) {
+    if (o.kind === 'cancelled' || (db.moneyMp !== 'all' && o.mp !== db.moneyMp)) continue;
+    const when = db.moneyBy === 'packed' ? o.packedAt : o.date;
+    if (!when || !test(new Date(when))) continue;
+    const v = valueOf(o);
+    t.count++; t.total += v.total; t.fee += v.fee; t.net += v.net;
+    t.byMp[o.mp] = (t.byMp[o.mp] || 0) + v.total;
+  }
+  return t;
+}
+function moneyCard(title, t) {
+  const split = db.moneyMp === 'all' && marketplaces().length > 1;
+  return `<div class="card"><div class="muted">${title} · ${t.count} order${t.count === 1 ? '' : 's'}</div>
+    <div class="big-total">${inr(t.total)}</div>
+    ${split ? marketplaces().map(mp => `<div class="kv muted"><span>${MP_NAME[mp]}</span><span>${inr(t.byMp[mp] || 0)}</span></div>`).join('') : ''}
+    <div class="kv"><span>Estimated marketplace fees</span><span>−${inr(t.fee)}</span></div>
+    <div class="kv"><span>Estimated net</span><span>${inr(t.net)}</span></div></div>`;
+}
+function renderMoney() {
+  const now = new Date(), today = dayKey(now), month = today.slice(0, 7);
+  if (db.moneyMp !== 'all' && !marketplaces().includes(db.moneyMp)) db.moneyMp = 'all';
+  const inView = o => db.moneyMp === 'all' || o.mp === db.moneyMp;
+  const orders = allOrders().filter(inView);
+  const items = feeCatalogue().filter(inView);
+  const noFee = items.filter(c => db.fees[c.key] == null);
+  const noPrice = orders.filter(o => o.kind !== 'cancelled' && valueOf(o).noPrice).length;
+  let lastMp = '';
+  view.innerHTML = `${mpChooser(db.moneyMp, 'moneyMp')}
+    <div class="stats">
+      <div class="stat"><b>${orders.filter(o => stateOf(o) === 'packed').length}</b><span>Packed orders</span></div>
+      <div class="stat"><b>${orders.filter(isPending).length}</b><span>Pending orders</span></div>
+    </div>
+    <div class="seg">
+      <button data-act="moneyBy" data-k="order" aria-pressed="${db.moneyBy === 'order'}">By order date</button>
+      <button data-act="moneyBy" data-k="packed" aria-pressed="${db.moneyBy === 'packed'}">By packed date</button>
+    </div>
+    ${moneyCard('Today', totals(d => dayKey(d) === today))}
+    ${moneyCard(now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }), totals(d => dayKey(d).startsWith(month)))}
+    ${noFee.length ? `<div class="banner warn">${noFee.length} SKU(s) have no fee set, so net looks higher than it is.</div>` : ''}
+    ${noPrice ? `<div class="banner warn">${noPrice} order(s) have no price yet and count as ₹0. Import a newer report.</div>` : ''}
+    <p class="muted">Cancelled orders are left out. Net is only value minus the fee % below. It does not include closing fees, shipping fees, GST or your product cost.</p>
+    ${items.length ? items.map(c => {
+      const head = c.mp !== lastMp ? `<h2>${MP_NAME[c.mp]} fee % per SKU</h2>` : '';
+      lastMp = c.mp;
+      return `${head}<div class="card"><div class="row">
+        <div class="grow"><div class="name">${esc(c.name)}</div><div class="muted mono">${esc(c.sku)}</div></div>
+        <div style="flex:0 0 96px"><input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-key="${esc(c.key)}" class="feeInput" value="${db.fees[c.key] == null ? '' : db.fees[c.key]}" placeholder="%" aria-label="${MP_NAME[c.mp]} fee percent for ${esc(c.sku)}"></div>
+      </div></div>`;
+    }).join('') : '<h2>Fee % per SKU</h2><p class="muted">Import orders to list your SKUs.</p>'}`;
+  view.querySelectorAll('.feeInput').forEach(input => input.addEventListener('change', () => {
+    const n = parseFloat(input.value);
+    if (input.value === '') delete db.fees[input.dataset.key];
+    else if (n >= 0 && n <= 100) db.fees[input.dataset.key] = n;
+    else { alert('Enter a percentage from 0 to 100.'); }
+    save();
+    const y = window.scrollY;
+    renderMoney();
+    window.scrollTo(0, y);
+  }));
+}
+actions.moneyBy = el => { db.moneyBy = el.dataset.k; save(); renderMoney(); };
+actions.moneyMp = el => { db.moneyMp = el.dataset.k; save(); renderMoney(); };
+
+/* ---------- History tab ---------- */
+const packedList = () => allOrders().filter(o => o.packedAt).sort((a, b) => b.packedAt.localeCompare(a.packedAt));
+const hist = { limit: 100 };
+function renderHistory() {
+  const list = packedList();
+  const sum = list.filter(o => o.kind !== 'cancelled').reduce((n, o) => n + valueOf(o).total, 0);
+  view.innerHTML = `<div class="stats">
+      <div class="stat"><b>${list.length}</b><span>Packed orders</span></div>
+      <div class="stat"><b>${inr(sum)}</b><span>Total value</span></div>
+    </div>
+    <button data-act="exportCsv" ${list.length ? '' : 'disabled'}>Export as CSV</button>
+    <div class="gap list">${list.length ? '' : '<p class="muted">Packed orders will appear here.</p>'}
+    ${list.slice(0, hist.limit).map(o => `<a href="${esc(orderHash(o.id))}">
+      <div class="row"><div class="grow mono"><b>${esc(o.id)}</b></div>${o.kind === 'cancelled' ? pill(o) : mpPill(o)}</div>
+      <div class="row"><div class="grow muted">${esc(fmtDateTime(o.packedAt))}</div><b>${inr(valueOf(o).total)}</b></div>
+    </a>`).join('')}
+    ${list.length > hist.limit ? `<button class="alt" data-act="moreHistory">Show more (${list.length - hist.limit} left)</button>` : ''}</div>`;
+}
+actions.moreHistory = () => { hist.limit += 100; renderHistory(); };
+function csvCell(v) {
+  let s = String(v == null ? '' : v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+actions.exportCsv = () => {
+  const head = ['Packed date', 'Marketplace', 'Order ID', 'Order date', 'Status', 'AWB', 'Items', 'Quantity', 'Item value', 'Shipping', 'Total value', 'Est fee', 'Est net'];
+  const rupees = p => (p / 100).toFixed(2);
+  const rows = packedList().map(o => {
+    const v = valueOf(o);
+    return [fmtDateTime(o.packedAt), MP_NAME[o.mp] || 'Other', o.id, fmtDate(o.date), stateOf(o) === 'cancelled' ? 'Cancelled' : 'Packed', o.awb,
+      o.lines.map(l => `${l.qty} x ${l.sku}`).join('; '), totalQty(o), rupees(v.items), rupees(v.ship), rupees(v.total), rupees(v.fee), rupees(v.net)];
+  });
+  const csv = [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n');
+  download(`packcheck-packed-${dayKey(new Date())}.csv`, '﻿' + csv, 'text/csv;charset=utf-8');
+};
+
+/* ---------- More tab ---------- */
+function renderMore() {
+  const links = Object.entries(db.barcodes);
+  const names = Object.fromEntries(catalogue().map(c => [c.sku, c.name]));
+  const usedKb = Math.round(JSON.stringify(db).length / 1024);
+  view.innerHTML = `<h2>Backup</h2>
+    <p class="muted">Your data lives only on this phone. Clearing the app's data, uninstalling it or changing phones erases it, so download a backup every day and keep it in Google Drive.</p>
+    <p class="muted">Last backup: ${db.lastBackup ? esc(fmtDateTime(db.lastBackup)) : 'never'}.</p>
+    <button data-act="backup">Download backup</button>
+    <button class="alt" data-act="restore">Restore from backup</button>
+    <p class="muted">Using about ${usedKb.toLocaleString('en-IN')} KB. <span id="persistState"></span> <span id="offlineState"></span></p>
+    <h2>Saved barcodes (${links.length})</h2>
+    ${links.length ? links.map(([code, sku]) => `<div class="card"><div class="row">
+      <div class="grow"><div class="mono">${esc(code)}</div><div class="name muted">${esc(names[sku] || sku)}</div></div>
+      <button class="danger small" data-act="unlink" data-code="${esc(code)}">Remove</button></div></div>`).join('') :
+      '<p class="muted">The app remembers a product barcode the first time you scan it.</p>'}
+    <h2>About</h2>
+    <p class="muted">PackCheck. No accounts, no ads, nothing uploaded.</p>
+    <a class="btn alt" href="privacy.html">Privacy policy</a>
+    <h2>Danger zone</h2>
+    <button class="danger" data-act="wipe">Delete all data</button>`;
+  if (navigator.storage && navigator.storage.persisted) navigator.storage.persisted().then(yes => {
+    const el = $('persistState');
+    if (el) el.textContent = yes ? 'Protected from automatic clearing.' : 'The phone may clear it if storage runs low.';
+  }).catch(() => {});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(() => {
+    const el = $('offlineState');
+    if (el) el.textContent = 'Ready to work offline.';
+  });
+}
+// Shown on the Pack tab when there are orders and no backup in the last day.
+function backupReminder() {
+  if (!Object.keys(db.orders).length) return '';
+  const age = db.lastBackup ? Date.now() - new Date(db.lastBackup).getTime() : Infinity;
+  if (age < 864e5) return '';
+  const days = Math.floor(age / 864e5);
+  return `<div class="banner warn"><strong>Back up your data</strong>${db.lastBackup ? `Last backup was ${days} day${days === 1 ? '' : 's'} ago.` : 'You have never downloaded a backup.'} Your orders exist only on this phone.
+    <button data-act="backup">Download backup</button></div>`;
+}
+actions.unlink = el => {
+  if (!confirm('Remove this barcode? The app will ask about it next time.')) return;
+  delete db.barcodes[el.dataset.code];
+  save();
+  renderMore();
+};
+actions.backup = () => {
+  db.lastBackup = new Date().toISOString();
+  download(`packcheck-backup-${dayKey(new Date())}.json`, JSON.stringify(db), 'application/json');
+  save();
+  route();
+};
+actions.restore = () => { $('fileBackup').value = ''; $('fileBackup').click(); };
+$('fileBackup').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  let d;
+  try {
+    d = JSON.parse(await file.text());
+    if (!d || typeof d.orders !== 'object' || Array.isArray(d.orders)) throw new Error('shape');
+  } catch (err) {
+    alert('That file is not a PackCheck backup.');
+    return;
+  }
+  if (!confirm(`Replace everything on this phone with this backup (${Object.keys(d.orders).length} orders)?`)) return;
+  const old = db;
+  db = parseData(JSON.stringify(d));
+  if (await save()) alert('Backup restored.');
+  else db = old;
+  route();
+});
+actions.wipe = () => {
+  if (!confirm('Delete ALL orders, history, fees and barcodes from this phone?')) return;
+  if (!confirm('This cannot be undone. Delete everything?')) return;
+  db = blank();
+  save();
+  route();
+};
+
+/* ---------- App updates ---------- */
+// A new version is installed in the background. The bar lets the user switch to it now.
+let updating = false;
+function showUpdateBar() { $('updateBar').classList.remove('hide'); }
+actions.applyUpdate = async () => {
+  await writing;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (reg && reg.waiting) {
+    updating = true;
+    reg.waiting.postMessage('skipWaiting');
+  } else location.reload();
+};
+if ('serviceWorker' in navigator) {
+  // A new version takes over in the background. The page on screen is still the old one, so offer a reload.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (updating) location.reload();
+    else if (hadController) showUpdateBar();
+  });
+  navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'page-updated') showUpdateBar(); });
+  navigator.serviceWorker.startMessages();
+}
+function watchForUpdates() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    const check = () => { if (reg.waiting && navigator.serviceWorker.controller) showUpdateBar(); };
+    check();
+    reg.addEventListener('updatefound', () => {
+      const sw = reg.installing;
+      if (sw) sw.addEventListener('statechange', () => { if (sw.state === 'installed') check(); });
+    });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => {});
+}
+
+startStorage().catch(() => { db = parseData(readOldStorage()); }).then(() => {
+  window.addEventListener('hashchange', route);
+  route();
+  watchForUpdates();
+});
+</script>
+</body>
+</html>
